@@ -5,8 +5,10 @@ Created on Fri Sep 16 15:33:57 2022
 
 @author: josemiguelacitores
 """
-import models
-import benchmark
+
+from models import *
+
 
 if __name__ == '__main__':
-    benchmark.benchmark_models('', '')
+    res = benchmark.benchmark_models([Tree(),GCN(),Transformer()])
+    print(res)

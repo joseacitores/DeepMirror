@@ -39,39 +39,41 @@ class Model(ABC):
     def predict(self):
         pass
     
+    @abstractmethod
     def featurize(self, benchmark, name):
+        pass
         
-        train_val, test = benchmark['train_val'], benchmark['test']
-        train_val_y = np.array(train_val.Y)
-        test_y = np.array(test.Y)
-        features_json = {}
+        # train_val, test = benchmark['train_val'], benchmark['test']
+        # train_val_y = np.array(train_val.Y)
+        # test_y = np.array(test.Y)
+        # features_json = {}
         
-        filename = path + name + '.json'
-        if os.path.exists(filename):
-                with open(filename) as json_file:
-                    features_json = json.load(json_file)
+        # filename = path + name + '.json'
+        # if os.path.exists(filename):
+        #         with open(filename) as json_file:
+        #             features_json = json.load(json_file)
                     
-                    if self.feat_name + '_train' in features_json.keys():
-                        f_train_val = features_json[self.feat_name + '_train']
-                        f_test = features_json[self.feat_name + '_test']
+        #             if self.feat_name + '_train' in features_json.keys():
+        #                 f_train_val = features_json[self.feat_name + '_train']
+        #                 f_test = features_json[self.feat_name + '_test']
                         
-                        return f_train_val, train_val_y, f_test, test_y
+        #                 return f_train_val, train_val_y, f_test, test_y
             
         
-        f_train_val = self.featurizer.featurize(train_val.iloc[:, 1].to_list())
-        f_test = self.featurizer.featurize(test.iloc[:, 1].to_list())
+        # f_train_val = self.featurizer.featurize(train_val.iloc[:, 1].to_list())
+        # f_test = self.featurizer.featurize(test.iloc[:, 1].to_list())
         
-        features_json[self.feat_name + '_train'] = f_train_val
-        features_json[self.feat_name + '_test']  = f_test
+        # features_json[self.feat_name + '_train'] = f_train_val
+        # features_json[self.feat_name + '_test']  = f_test
         
-        json_object = json.dumps(features_json, indent=4)
+        # json_object = json.dumps(features_json, indent=4)
         
-        with open(path + name + '.json', 'w') as fp:
-            json.dump(json_object, fp)
+        # with open(path + name + '.json', 'w') as fp:
+        #     json.dump(json_object, fp)
         
         
         
-        return f_train_val, train_val_y, f_test, test_y
+        # return f_train_val, train_val_y, f_test, test_y
         
     
 class Tree(Model):
@@ -105,12 +107,17 @@ class Tree(Model):
         return res
         
         
-    # def featurize(self, train_val, test):
+    def featurize(self, benchmark, name):
         
-    #     f_train_val = self.featurizer.featurize(train_val.iloc[:, 1].to_list())
-    #     f_test = self.featurizer.featurize(test.iloc[:, 1].to_list())
+        train_val, test = benchmark['train_val'], benchmark['test']
+        train_val_y = np.array(train_val.Y)
+        test_y = np.array(test.Y)
         
-    #     return f_train_val, f_test
+        f_train_val = self.featurizer.featurize(train_val.iloc[:, 1].to_list())
+        f_test = self.featurizer.featurize(test.iloc[:, 1].to_list())
+        
+        return f_train_val, train_val_y, f_test, test_y
+    
        
 class GBR(Model):
     '''Class for the GBR model, it can store the best parameters'''
@@ -144,12 +151,16 @@ class GBR(Model):
         return res
         
         
-    # def featurize(self, train_val, test):
+    def featurize(self, benchmark, name):
         
-    #     f_train_val = self.featurizer.featurize(train_val.iloc[:, 1].to_list())
-    #     f_test = self.featurizer.featurize(test.iloc[:, 1].to_list())
+        train_val, test = benchmark['train_val'], benchmark['test']
+        train_val_y = np.array(train_val.Y)
+        test_y = np.array(test.Y)
         
-    #     return f_train_val, f_test
+        f_train_val = self.featurizer.featurize(train_val.iloc[:, 1].to_list())
+        f_test = self.featurizer.featurize(test.iloc[:, 1].to_list())
+        
+        return f_train_val, train_val_y, f_test, test_y
         
     
 
@@ -203,18 +214,23 @@ class Transformer(Model):
         # Recommended batch size: 16, 32. See: https://arxiv.org/pdf/1810.04805.pdf
         batch_size = 16
         
+        #validation methods implemented, but for the trial of the models with low epochs it is not useful
+        
         # Indices of the train and validation splits stratified by labels
-        train_x, val_x, train_y, val_y, train_mask, val_mask = train_test_split(train_val, labels, self.f_train_val_att_m,
-            test_size = val_ratio,
-            shuffle = True)
+        # train_x, val_x, train_y, val_y, train_mask, val_mask = train_test_split(train_val, labels, self.f_train_val_att_m,
+        #     test_size = val_ratio,
+        #     shuffle = True)
+        train_x = train_val
+        train_y = labels
+        train_mask = self.f_train_val_att_m
 
 
         train_set = TensorDataset(torch.from_numpy(train_x.astype(int)),
                                   torch.from_numpy(train_mask.astype(int)),
                                   torch.from_numpy(train_y.astype('float32')))
-        val_set = TensorDataset(torch.from_numpy(val_x.astype(int)),
-                                torch.from_numpy(val_mask.astype(int)),
-                                torch.from_numpy(val_y.astype('float32')))
+        # val_set = TensorDataset(torch.from_numpy(val_x.astype(int)),
+        #                         torch.from_numpy(val_mask.astype(int)),
+        #                         torch.from_numpy(val_y.astype('float32')))
         
         # Prepare DataLoader
         train_dataloader = DataLoader(
@@ -223,12 +239,12 @@ class Transformer(Model):
                     batch_size = batch_size
                 )
         
-        validation_dataloader = DataLoader(
-                    val_set,
-                    sampler = SequentialSampler(val_set),
-                    batch_size = batch_size
-                )
-        return train_dataloader, validation_dataloader
+        # validation_dataloader = DataLoader(
+        #             val_set,
+        #             sampler = SequentialSampler(val_set),
+        #             batch_size = batch_size
+        #         )
+        return train_dataloader, None#validation_dataloader
     
     def train(self, train_val_set, y):
         self.model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=1)
@@ -270,21 +286,21 @@ class Transformer(Model):
                 nb_tr_examples += b_input_ids.size(0)
                 nb_tr_steps += 1
         
-            # ========== Validation ==========
+            # Validation
         
             # Set model to evaluation mode
-            self.model.eval()
+        #     self.model.eval()
         
-            for batch in validation_dataloader:
-                batch = tuple(t.to(device) for t in batch)
-                b_input_ids, b_input_mask, b_labels = batch
-                with torch.no_grad():
-                  # Forward pass
-                  eval_output = self.model(b_input_ids, 
-                                      token_type_ids = None, 
-                                      attention_mask = b_input_mask)
-                logits = eval_output.logits.detach().cpu().numpy()
-        label_ids = b_labels.to('cpu').numpy()
+        #     for batch in validation_dataloader:
+        #         batch = tuple(t.to(device) for t in batch)
+        #         b_input_ids, b_input_mask, b_labels = batch
+        #         with torch.no_grad():
+        #           # Forward pass
+        #           eval_output = self.model(b_input_ids, 
+        #                               token_type_ids = None, 
+        #                               attention_mask = b_input_mask)
+        #         logits = eval_output.logits.detach().cpu().numpy()
+        # label_ids = b_labels.to('cpu').numpy()
     
     def predict(self, test_set):
         

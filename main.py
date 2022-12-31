@@ -9,4 +9,4 @@ import models
 import benchmark
 
 if __name__ == '__main__':
-    pass
+    benchmark.benchmark_models('', '')

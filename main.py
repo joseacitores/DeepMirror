@@ -10,5 +10,5 @@ from models import *
 
 
 if __name__ == '__main__':
-    res = benchmark.benchmark_models([Tree(),GCN(),Transformer()])
+    res = benchmark.benchmark_models([GCN(), ['solubility_aqsoldb']])
     print(res)

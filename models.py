@@ -173,7 +173,7 @@ class GCN(Model):
     
     def train(self, train_set, y):
         gcn = GCNModel(n_tasks=1, mode='regression',batch_size=32, learning_rate=0.001)
-        train_ds = dc.data.NumpyDataset(X=train_set, y=np.array(y))
+        train_ds = dc.data.NumpyDataset(X=train_set, y=np.array(y).astype('float32'))
         gcn.fit(train_ds, 10)
         
         self.model = gcn
